@@ -1,0 +1,3 @@
+#basic config options
+server_name=IBM-PF3TSS1L\SQLEXPRESS
+database_name=CarDealership
