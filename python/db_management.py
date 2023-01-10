@@ -2,11 +2,10 @@
 
 import pandas as pd
 import pyodbc
+from utils import get_config_value
 
 # pylint: disable=c-extension-no-member,anomalous-backslash-in-string
 
-#TODO: move all setup into seperate class
-#TODO: move things such as get_config_value into seperate class
 #TODO: write to config file
 #TODO: implement better solution for when config file value is invalid
 
@@ -64,20 +63,6 @@ def connect_to_server(server) -> pyodbc.Connection:
                       'Server=' + server + ';'
                       'Trusted_Connection=yes;')
     return conn
-
-def get_config_value(config_type: str) -> str:
-    '''Returns the specified config value.
-            Parameters:
-                    config type (string): The config value to retrieve
-            Returns:
-                    config value (string): The value to retrieve'''
-
-    file = open('config.txt', 'r')
-    contents = file.readlines()
-
-    for line in contents:
-        if line.startswith(config_type + "="):
-            return line[line.find('=') + 1:].strip()
 
 
 if __name__ == "__main__":
