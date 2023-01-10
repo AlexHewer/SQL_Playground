@@ -2,54 +2,57 @@
 
 import pandas as pd
 import pyodbc
-from utils import get_config_value
+from utils import get_config_value, write_config_value
 
-# pylint: disable=c-extension-no-member,anomalous-backslash-in-string
+# pylint: disable=c-extension-no-member,anomalous-backslash-in-string,global-statement
 
-#TODO: write to config file
 #TODO: implement better solution for when config file value is invalid
+
+CONN: object
+CURSOR: object
 
 def main():
     """Main function controlling the order of logic."""
-    db_data: tuple = load_database()
-    conn = db_data[0]
-    cursor = db_data[1]
+    load_database()
 
 
     #TODO: remove below and implement further
-    cursor.execute('SELECT Name FROM Models')
-    for i in cursor:
+    CURSOR.execute('SELECT Name FROM Models')
+    for i in CURSOR:
         print(i[0])
-    d_f = pd.read_sql_query('SELECT * FROM Models', conn)
-    print(d_f)
+    output = pd.read_sql_query('SELECT * FROM Models', CONN)
+    print(output)
 
 
-def load_database() -> tuple:
-    '''Retrieves server connection and loads database.
-            Returns:
-                    tuple: arg 0 = connection. arg 1 = cursor'''
+def load_database():
+    '''Retrieves server connection and loads database.'''
+
+    #attempt server connection
     server_connected: bool = False
     server_name: str = get_config_value("server_name")
     while server_connected is False:
         try:
-            conn: pyodbc.Connection = connect_to_server(server_name)
-            cursor: pyodbc.Cursor = conn.cursor()
+            global CONN
+            global CURSOR
+            CONN = pyodbc.Connection = connect_to_server(server_name)
+            CURSOR = CONN.cursor()
             server_connected = True
         except pyodbc.Error as ex:
             print(ex.args[0] + ": Server connection error, is the server name correct?")
             server_name = input("Enter Server Name: ")
+            write_config_value("server_name", server_name)
 
+    #attempt database connection
     database_connected: bool = False
     database_name: str = get_config_value("database_name")
     while database_connected is False:
         try:
-            cursor.execute('USE ' + database_name)
+            CURSOR.execute('USE ' + database_name)
             database_connected = True
         except pyodbc.Error as ex:
             print(ex.args[0] + ": Server connection error, is the database name correct?")
             database_name = input("Enter Database Name: ")
-
-    return conn, cursor
+            write_config_value("database_name", database_name)
 
 
 def connect_to_server(server) -> pyodbc.Connection:
