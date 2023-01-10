@@ -2,18 +2,18 @@
 
 import pandas as pd
 import pyodbc
-from utils import get_config_value, write_config_value
+from utils import get_config_value, write_config_value, create_config
+import os.path
 
-# pylint: disable=c-extension-no-member,anomalous-backslash-in-string,global-statement
-
-#TODO: implement better solution for when config file value is invalid
+# pylint: disable=c-extension-no-member,anomalous-backslash-in-string,global-statement,expression-not-assigned
 
 CONN: object
 CURSOR: object
 
 def main():
     """Main function controlling the order of logic."""
-    load_database()
+
+    load_database() if os.path.isfile('config.txt') else create_config()
 
 
     #TODO: remove below and implement further
@@ -25,7 +25,7 @@ def main():
 
 
 def load_database():
-    '''Retrieves server connection and loads database.'''
+    '''Retrieves server connection and loads database into global variables.'''
 
     #attempt server connection
     server_connected: bool = False

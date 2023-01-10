@@ -35,3 +35,8 @@ def write_config_value(config_type: str, new_value: str) -> bool:
         else:
             file.write(line)
     return True
+
+def create_config():
+    '''temp'''
+    print("hello")
+    #TODO: implement logic
