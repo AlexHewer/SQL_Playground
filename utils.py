@@ -7,7 +7,7 @@ def get_config_value(config_type: str) -> str:
             Returns:
                     config value (string): The value to retrieve'''
 
-    file = open('config.txt', 'r')
+    file = open('properties/config.txt', 'r')
     contents = file.readlines()
     file.close()
 
@@ -24,11 +24,11 @@ def write_config_value(config_type: str, new_value: str) -> bool:
             Returns:
                     is updated (bool): True if written successfully'''
 
-    file = open('config.txt', 'r')
+    file = open('properties/config.txt', 'r')
     contents: list[str] = file.readlines()
     file.close()
 
-    file = open('config.txt', 'w')
+    file = open('properties/config.txt', 'w')
     for line in contents:
         if line.startswith(config_type + "="):
             file.write(line[:line.find('=')+1].strip() + new_value + '\n')

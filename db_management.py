@@ -1,9 +1,9 @@
 '''This is for testing databases'''
 
+import os.path
 import pandas as pd
 import pyodbc
 from utils import get_config_value, write_config_value, create_config
-import os.path
 
 # pylint: disable=c-extension-no-member,anomalous-backslash-in-string,global-statement,expression-not-assigned
 
@@ -13,10 +13,10 @@ CURSOR: object
 def main():
     """Main function controlling the order of logic."""
 
-    load_database() if os.path.isfile('config.txt') else create_config()
+    load_database() if os.path.isfile('properties/config.txt') else create_config()
 
 
-    #TODO: remove below and implement further
+    # TODO: remove below and implement further
     CURSOR.execute('SELECT Name FROM Models')
     for i in CURSOR:
         print(i[0])
