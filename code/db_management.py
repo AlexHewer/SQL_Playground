@@ -13,16 +13,15 @@ CURSOR: object
 def main():
     """Main function controlling the order of logic."""
 
-    load_database() if os.path.isfile('properties/config.txt') else create_config()
-
-
     # TODO: remove below and implement further
     CURSOR.execute('SELECT Name FROM Models')
     for i in CURSOR:
         print(i[0])
     output = pd.read_sql_query('SELECT * FROM Models', CONN)
     print(output)
-
+    
+def get_table(sql_query: str) -> pd.DataFrame:
+    return pd.read_sql_query(sql_query, CONN)
 
 def load_database():
     '''Retrieves server connection and loads database into global variables.'''
@@ -53,7 +52,6 @@ def load_database():
             print(ex.args[0] + ": Server connection error, is the database name correct?")
             database_name = input("Enter Database Name: ")
             write_config_value("database_name", database_name)
-
 
 def connect_to_server(server) -> pyodbc.Connection:
     '''Returns the server connection.
