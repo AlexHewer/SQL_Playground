@@ -7,21 +7,20 @@ from utils import get_config_value, write_config_value, create_config
 
 # pylint: disable=c-extension-no-member,anomalous-backslash-in-string,global-statement,expression-not-assigned
 
-CONN: object
-CURSOR: object
+CONN: pyodbc.Connection
+CURSOR: pyodbc.Cursor
 
-def main():
-    """Main function controlling the order of logic."""
-
-    # TODO: remove below and implement further
-    CURSOR.execute('SELECT Name FROM Models')
-    for i in CURSOR:
-        print(i[0])
-    output = pd.read_sql_query('SELECT * FROM Models', CONN)
-    print(output)
-    
 def get_table(sql_query: str) -> pd.DataFrame:
     return pd.read_sql_query(sql_query, CONN)
+
+def get_tables() -> list[str]:
+    #Retrieves all tables in the database. Working but unsure if effective on different systems etc.
+    tables: list[str] = []
+    for row in CURSOR.tables():
+        if row.table_name == "trace_xe_action_map":
+            return tables
+        tables.append(row.table_name)
+
 
 def load_database():
     '''Retrieves server connection and loads database into global variables.'''
@@ -65,6 +64,3 @@ def connect_to_server(server) -> pyodbc.Connection:
                       'Trusted_Connection=yes;')
     return conn
 
-
-if __name__ == "__main__":
-    main()

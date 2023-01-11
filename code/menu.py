@@ -3,7 +3,7 @@
 import os
 import db_management
 from pandastable import Table, TableModel, config
-
+from pandas import DataFrame
 from customtkinter import *
 
 class GUI:
@@ -30,43 +30,65 @@ class GUI:
         self.register_btn.pack(pady=12, padx=10, side=TOP)
         
     def view_table(self):
+        #create SQL Query
+        sql_query: str = f"SELECT {self.sel1.get()} FROM {self.from1.get()}"
+        
+        #generate GUI
         root = CTk()
         self.frame2 = CTkFrame(root)
         self.frame2.pack()
-        pt = Table(self.frame2, dataframe=db_management.get_table(self.sql_in.get()))
+        pt = Table(self.frame2, dataframe=db_management.get_table(sql_query))
         pt.show()
         root.mainloop()   
         
     def db_connected(self):
-                #remove any current windows
+        #remove any current windows
         for i in self.master.winfo_children():
             i.destroy()
             
+        #create database connection   
+        db_management.load_database() if os.path.isfile('properties/config.txt') else db_management.create_config()
+        db_management.load_database()
+        df: DataFrame = db_management.get_table("SELECT * FROM Models")
+        for col in df.columns:
+            print(col)
+        print(db_management.get_tables())    
+        
         #create top area for title
         self.top = CTkFrame(self.master, width=300, height=100)
         self.top.pack(pady=5, padx=5, fill="both", expand=False, anchor=N)
         #create sql query area
-        self.middle = CTkFrame(self.master, width=300, height=700)
-        self.middle.pack(pady=5, padx=5, fill="both", expand=True, anchor=CENTER)
+        self.middle = CTkFrame(self.master, width=300, height=200)
+        self.middle.pack(pady=5, padx=5, fill="both", expand=False, anchor=CENTER)
         #create bottom area for back button
         self.bottom = CTkFrame(self.master, width=300, height=300)
         self.bottom.pack(pady=5, padx=5, fill="both", expand=True, anchor=S)
         
-        
+        #create title
         self.title_txt = CTkLabel(self.top, text='Database Viewing System', font=("Roboto", 25))
         self.title_txt.pack(pady=12, padx=10, side=TOP, anchor=N)      
           
-        self.sql_in = CTkEntry(self.middle, justify=CENTER, width=1000, height=50, font=("Roboto", 15))
-        self.sql_in.pack(pady=20, padx=30, side=TOP)
+        #select ### from ### area
+        self.sel_txt = CTkLabel(self.middle, text='SELECT', font=("Roboto", 25))
+        self.sel_txt.pack(pady=12, padx=10, side=LEFT)     
         
+        self.sel1 = CTkEntry(self.middle, justify=CENTER, width=250, height=50, font=("Roboto", 15))
+        self.sel1.pack(pady=20, padx=30, side=LEFT)
+        
+        self.from_txt = CTkLabel(self.middle, text='FROM', font=("Roboto", 25))
+        self.from_txt.pack(pady=12, padx=10, side=LEFT)
+        
+        self.from1 = CTkEntry(self.middle, justify=CENTER, width=250, height=50, font=("Roboto", 15))
+        self.from1.pack(pady=20, padx=30, side=LEFT)
+        
+        #bottom area
         self.view_btn = CTkButton(self.bottom, text="View Query", command=self.view_table, width=250, height=75, font=("Roboto", 25))
         self.view_btn.pack(pady=12, padx=10, side=LEFT)
         
         self.back_btn = CTkButton(self.bottom, text="Return", command=self.main_menu, width=250, height=75, font=("Roboto", 25))
         self.back_btn.pack(pady=12, padx=10, side=RIGHT)
         
-        db_management.load_database() if os.path.isfile('properties/config.txt') else db_management.create_config()
-        db_management.load_database() 
+
     
 def main():
     set_appearance_mode("dark")
