@@ -26,12 +26,17 @@ class GUI:
         self.reg_txt = CTkLabel(self.frame1, text='Main Menu', font=("Roboto", 25))
         self.reg_txt.pack(pady=12, padx=10, side=TOP, anchor=N)
         
-        self.register_btn = CTkButton(self.frame1, text="View Database", command=self.db_connected, width=250, height=75, font=("Roboto", 25))
+        self.register_btn = CTkButton(self.frame1, text="View Database", command=self.view_menu, width=250, height=75, font=("Roboto", 25))
         self.register_btn.pack(pady=12, padx=10, side=TOP)
         
     def view_table(self):
         #create SQL Query
-        sql_query: str = f"SELECT {self.sel1.get()} FROM {self.from1.get()}"
+        sql_query: str = f"SELECT {self.field_ops.get()} FROM {self.table_ops.get()}"
+        if self.where_ops.get() != '*' and self.wcondition.get() != '':
+            sql_query += f" WHERE {self.where_ops.get()}='{self.wcondition.get()}'"
+            
+        if self.order_ops.get() != '*':
+            sql_query += f" ORDER BY {self.order_ops.get()} {self.order_type.get()}"
         
         #generate GUI
         root = CTk()
@@ -41,7 +46,7 @@ class GUI:
         pt.show()
         root.mainloop()   
         
-    def db_connected(self):
+    def view_menu(self):
         #remove any current windows
         for i in self.master.winfo_children():
             i.destroy()
@@ -49,37 +54,68 @@ class GUI:
         #create database connection   
         db_management.load_database() if os.path.isfile('properties/config.txt') else db_management.create_config()
         db_management.load_database()
-        df: DataFrame = db_management.get_table("SELECT * FROM Models")
-        for col in df.columns:
-            print(col)
-        print(db_management.get_tables())    
         
-        #create top area for title
+        #create frames
         self.top = CTkFrame(self.master, width=300, height=100)
         self.top.pack(pady=5, padx=5, fill="both", expand=False, anchor=N)
-        #create sql query area
-        self.middle = CTkFrame(self.master, width=300, height=200)
-        self.middle.pack(pady=5, padx=5, fill="both", expand=False, anchor=CENTER)
-        #create bottom area for back button
+        
+        self.select = CTkFrame(self.master, width=300, height=200)
+        self.select.pack(pady=5, padx=5, fill="both", expand=False, anchor=CENTER)
+        
+        self.frm = CTkFrame(self.master, width=300, height=200)
+        self.frm.pack(pady=5, padx=5, fill="both", expand=False, anchor=CENTER)
+        
+        self.where = CTkFrame(self.master, width=300, height=50)
+        self.where.pack(pady=5, padx=5, fill="both", expand=False, anchor=CENTER)
+        
+        self.order = CTkFrame(self.master, width=300, height=50)
+        self.order.pack(pady=5, padx=5, fill="both", expand=False, anchor=CENTER)
+        
         self.bottom = CTkFrame(self.master, width=300, height=300)
         self.bottom.pack(pady=5, padx=5, fill="both", expand=True, anchor=S)
         
-        #create title
+        #create title & dropdown menu
         self.title_txt = CTkLabel(self.top, text='Database Viewing System', font=("Roboto", 25))
-        self.title_txt.pack(pady=12, padx=10, side=TOP, anchor=N)      
+        self.title_txt.pack(pady=12, padx=5, side=TOP, anchor=N)  
           
         #select ### from ### area
-        self.sel_txt = CTkLabel(self.middle, text='SELECT', font=("Roboto", 25))
+        db_tables: list[str] = db_management.get_tables()
+        self.selected_table = StringVar(value=db_tables[0])
+        
+        self.sel_txt = CTkLabel(self.select, text='SELECT', font=("Roboto", 25))
         self.sel_txt.pack(pady=12, padx=10, side=LEFT)     
         
-        self.sel1 = CTkEntry(self.middle, justify=CENTER, width=250, height=50, font=("Roboto", 15))
-        self.sel1.pack(pady=20, padx=30, side=LEFT)
-        
-        self.from_txt = CTkLabel(self.middle, text='FROM', font=("Roboto", 25))
+        self.update_fields(self)
+
+
+        self.from_txt = CTkLabel(self.frm, text='FROM', font=("Roboto", 25))
         self.from_txt.pack(pady=12, padx=10, side=LEFT)
         
-        self.from1 = CTkEntry(self.middle, justify=CENTER, width=250, height=50, font=("Roboto", 15))
-        self.from1.pack(pady=20, padx=30, side=LEFT)
+        self.table_ops = CTkOptionMenu(master=self.frm, values=db_tables, command=self.update_fields, variable=self.selected_table)
+        self.table_ops.pack(padx=20, pady=5, side=LEFT)
+        
+        
+        self.where_txt = CTkLabel(self.where, text='WHERE', font=("Roboto", 25))
+        self.where_txt.pack(pady=12, padx=10, side=LEFT)
+        
+        self.where_ops = CTkOptionMenu(master=self.where, values=self.table_fields)
+        self.where_ops.pack(padx=12, pady=1, side=LEFT)
+        
+        self.wequals_txt = CTkLabel(self.where, text='=', font=("Roboto", 25))
+        self.wequals_txt.pack(pady=12, padx=1, side=LEFT)
+        
+        self.wcondition = CTkEntry(self.where, font=("Roboto", 25), width=150)
+        self.wcondition.pack(pady=12, padx=10, side=LEFT)
+        
+        
+        self.order_txt = CTkLabel(self.order, text='ORDER BY', font=("Roboto", 25))
+        self.order_txt.pack(pady=12, padx=10, side=LEFT)
+        
+        self.order_ops = CTkOptionMenu(master=self.order, values=self.table_fields)
+        self.order_ops.pack(padx=20, pady=5, side=LEFT)
+        
+        self.order_type = CTkOptionMenu(master=self.order, values=["ASC", "DESC"])
+        self.order_type.pack(padx=20, pady=5, side=LEFT)
         
         #bottom area
         self.view_btn = CTkButton(self.bottom, text="View Query", command=self.view_table, width=250, height=75, font=("Roboto", 25))
@@ -88,6 +124,23 @@ class GUI:
         self.back_btn = CTkButton(self.bottom, text="Return", command=self.main_menu, width=250, height=75, font=("Roboto", 25))
         self.back_btn.pack(pady=12, padx=10, side=RIGHT)
         
+    def view_table_update(self, event):
+        print(self.selected_table.get())
+        
+    def update_fields(self, *event):
+        df: DataFrame = db_management.get_table(f"SELECT * FROM {self.selected_table.get()}")
+        self.table_fields: list[str] = ["*"]
+        for col in df.columns:
+            self.table_fields.append(col)
+        self.selected_field = StringVar(value=self.table_fields[0])
+        try:
+            self.field_ops.configure(self.select, values=self.table_fields, variable=self.selected_field)  
+            self.where_ops.configure(self.where, values=self.table_fields) 
+            self.order_ops.configure(self.order, values=self.table_fields)
+        except:         
+            self.field_ops = CTkOptionMenu(master=self.select, values=self.table_fields, variable=self.selected_field)
+            self.field_ops.pack(padx=20, pady=5, side=LEFT)
+
 
     
 def main():

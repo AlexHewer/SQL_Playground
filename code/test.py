@@ -1,15 +1,16 @@
-import tkinter as tk
-from pandastable import Table
-import db_management
+from customtkinter import *
+root = CTk()
 
-db_management.load_database()
+temp1 = ["1", "2", "3", "4", "5"]
 
-root = tk.Tk()
+test = CTkOptionMenu(master=root, values=temp1)
+test.pack(padx=20, pady=5, side=LEFT)
 
-frame = tk.Frame(root)
-frame.pack()
+def click():
+    temp2 = ["6","7","8","9"]
+    test.configure(root, values=temp2)
 
-pt = Table(frame, dataframe=db_management.get_db())
-pt.show()
+btn = CTkButton(root, text="Change text", command=click)
+btn.pack()
 
 root.mainloop()

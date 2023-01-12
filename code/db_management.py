@@ -11,6 +11,7 @@ CONN: pyodbc.Connection
 CURSOR: pyodbc.Cursor
 
 def get_table(sql_query: str) -> pd.DataFrame:
+    CURSOR.cancel()
     return pd.read_sql_query(sql_query, CONN)
 
 def get_tables() -> list[str]:
