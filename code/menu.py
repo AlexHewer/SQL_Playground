@@ -31,7 +31,15 @@ class GUI:
         
     def view_table(self):
         #create SQL Query
-        sql_query: str = f"SELECT {self.field_ops.get()} FROM {self.table_ops.get()}"
+        sql_query: str = "SELECT"
+        for i in range(0, len(self.field_stack)):
+            if i == 0:
+                sql_query += f" {self.field_stack[i].get()}"
+            elif self.field_stack[i].get() != "*":
+                sql_query += f", {self.field_stack[i].get()}"
+                
+        sql_query += f" FROM {self.table_ops.get()}"
+
         if self.where_ops.get() != '*' and self.wcondition.get() != '':
             sql_query += f" WHERE {self.where_ops.get()}='{self.wcondition.get()}'"
             
@@ -81,12 +89,12 @@ class GUI:
         #select ### from ### area
         db_tables: list[str] = db_management.get_tables()
         self.selected_table = StringVar(value=db_tables[0])
+        self.field_stack: list[CTkOptionMenu] = []
         
         self.sel_txt = CTkLabel(self.select, text='SELECT', font=("Roboto", 25))
         self.sel_txt.pack(pady=12, padx=10, side=LEFT)     
         
-        self.update_fields(self)
-
+        self.field_stack.append(self.update_fields(self))
 
         self.from_txt = CTkLabel(self.frm, text='FROM', font=("Roboto", 25))
         self.from_txt.pack(pady=12, padx=10, side=LEFT)
@@ -127,19 +135,37 @@ class GUI:
     def view_table_update(self, event):
         print(self.selected_table.get())
         
-    def update_fields(self, *event):
+    def update_fields(self, *event) -> CTkOptionMenu:
         df: DataFrame = db_management.get_table(f"SELECT * FROM {self.selected_table.get()}")
         self.table_fields: list[str] = ["*"]
         for col in df.columns:
             self.table_fields.append(col)
         self.selected_field = StringVar(value=self.table_fields[0])
         try:
-            self.field_ops.configure(self.select, values=self.table_fields, variable=self.selected_field)  
+            self.field_stack[0].configure(self.select, values=self.table_fields, variable=self.selected_field)  
             self.where_ops.configure(self.where, values=self.table_fields) 
             self.order_ops.configure(self.order, values=self.table_fields)
         except:         
-            self.field_ops = CTkOptionMenu(master=self.select, values=self.table_fields, variable=self.selected_field)
-            self.field_ops.pack(padx=20, pady=5, side=LEFT)
+            field_ops = CTkOptionMenu(master=self.select, values=self.table_fields, variable=self.selected_field, command=self.add_fields)
+            field_ops.pack(padx=20, pady=5, side=LEFT)
+            return field_ops
+        
+    def add_fields(self, *event):
+        if self.field_stack[len(self.field_stack) -1].get() == '*':
+            if len(self.field_stack) > 1:
+                field_ops = self.field_stack.pop()
+                field_ops.destroy()
+            self.field_stack[len(self.field_stack) -1].configure(command=self.add_fields)
+
+        else:       
+            self.field_stack[len(self.field_stack) -1].configure(command=print("value changed"))
+            field_ops = CTkOptionMenu(master=self.select, values=self.table_fields, command=self.add_fields)
+            field_ops.pack(padx=20, pady=5, side=LEFT)
+            self.field_stack.append(field_ops)
+        
+    def temp(self, *event):
+        field_ops = self.field_stack.pop()
+        field_ops.destroy()
 
 
     
