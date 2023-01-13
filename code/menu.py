@@ -26,35 +26,13 @@ class GUI:
         self.reg_txt = CTkLabel(self.frame1, text='Main Menu', font=("Roboto", 25))
         self.reg_txt.pack(pady=12, padx=10, side=TOP, anchor=N)
         
-        self.register_btn = CTkButton(self.frame1, text="View Database", command=self.view_menu, width=250, height=75, font=("Roboto", 25))
+        self.register_btn = CTkButton(self.frame1, text="View Database", command=self.sql_select_menu, width=250, height=75, font=("Roboto", 25))
         self.register_btn.pack(pady=12, padx=10, side=TOP)
-        
-    def view_table(self):
-        #create SQL Query
-        sql_query: str = "SELECT"
-        for i in range(0, len(self.field_stack)):
-            if i == 0:
-                sql_query += f" {self.field_stack[i].get()}"
-            elif self.field_stack[i].get() != "*":
-                sql_query += f", {self.field_stack[i].get()}"
-                
-        sql_query += f" FROM {self.table_ops.get()}"
 
-        if self.where_ops.get() != '*' and self.wcondition.get() != '':
-            sql_query += f" WHERE {self.where_ops.get()}='{self.wcondition.get()}'"
-            
-        if self.order_ops.get() != '*':
-            sql_query += f" ORDER BY {self.order_ops.get()} {self.order_type.get()}"
-        
-        #generate GUI
-        root = CTk()
-        self.frame2 = CTkFrame(root)
-        self.frame2.pack()
-        pt = Table(self.frame2, dataframe=db_management.get_table(sql_query))
-        pt.show()
-        root.mainloop()   
-        
-    def view_menu(self):
+    """The next set of functions are what allow the select statement menu work. It allows for any table to be selected
+       and then a dynamic amount of fields to be displayed. Currently, it only allows for one WHERE statement, but this is subject to change."""
+
+    def sql_select_menu(self):
         #remove any current windows
         for i in self.master.winfo_children():
             i.destroy()
@@ -82,46 +60,38 @@ class GUI:
         self.bottom = CTkFrame(self.master, width=300, height=300)
         self.bottom.pack(pady=5, padx=5, fill="both", expand=True, anchor=S)
         
-        #create title & dropdown menu
+        #create title
         self.title_txt = CTkLabel(self.top, text='Database Viewing System', font=("Roboto", 25))
         self.title_txt.pack(pady=12, padx=5, side=TOP, anchor=N)  
           
         #select ### from ### area
         db_tables: list[str] = db_management.get_tables()
         self.selected_table = StringVar(value=db_tables[0])
+        self.selected_where = StringVar(value="*")
         self.field_stack: list[CTkOptionMenu] = []
         
         self.sel_txt = CTkLabel(self.select, text='SELECT', font=("Roboto", 25))
         self.sel_txt.pack(pady=12, padx=10, side=LEFT)     
-        
         self.field_stack.append(self.update_fields(self))
 
         self.from_txt = CTkLabel(self.frm, text='FROM', font=("Roboto", 25))
         self.from_txt.pack(pady=12, padx=10, side=LEFT)
-        
-        self.table_ops = CTkOptionMenu(master=self.frm, values=db_tables, command=self.update_fields, variable=self.selected_table)
+        self.table_ops = CTkOptionMenu(master=self.frm, values=db_tables, command=self.table_updated, variable=self.selected_table)
         self.table_ops.pack(padx=20, pady=5, side=LEFT)
-        
         
         self.where_txt = CTkLabel(self.where, text='WHERE', font=("Roboto", 25))
         self.where_txt.pack(pady=12, padx=10, side=LEFT)
-        
-        self.where_ops = CTkOptionMenu(master=self.where, values=self.table_fields)
+        self.where_ops = CTkOptionMenu(master=self.where, values=self.table_fields, variable=self.selected_where)
         self.where_ops.pack(padx=12, pady=1, side=LEFT)
-        
         self.wequals_txt = CTkLabel(self.where, text='=', font=("Roboto", 25))
         self.wequals_txt.pack(pady=12, padx=1, side=LEFT)
-        
         self.wcondition = CTkEntry(self.where, font=("Roboto", 25), width=150)
         self.wcondition.pack(pady=12, padx=10, side=LEFT)
         
-        
         self.order_txt = CTkLabel(self.order, text='ORDER BY', font=("Roboto", 25))
         self.order_txt.pack(pady=12, padx=10, side=LEFT)
-        
         self.order_ops = CTkOptionMenu(master=self.order, values=self.table_fields)
         self.order_ops.pack(padx=20, pady=5, side=LEFT)
-        
         self.order_type = CTkOptionMenu(master=self.order, values=["ASC", "DESC"])
         self.order_type.pack(padx=20, pady=5, side=LEFT)
         
@@ -132,9 +102,40 @@ class GUI:
         self.back_btn = CTkButton(self.bottom, text="Return", command=self.main_menu, width=250, height=75, font=("Roboto", 25))
         self.back_btn.pack(pady=12, padx=10, side=RIGHT)
         
-    def view_table_update(self, event):
-        print(self.selected_table.get())
+    def view_table(self):
+        #create SQL Query
+        sql_query: str = "SELECT"
+        for i in range(0, len(self.field_stack)):
+            if i == 0:
+                sql_query += f" {self.field_stack[i].get()}"
+            elif self.field_stack[i].get() != "*":
+                sql_query += f", {self.field_stack[i].get()}"
+                
+        sql_query += f" FROM {self.table_ops.get()}"
+
+        if self.where_ops.get() != '*' and self.wcondition.get() != '':
+            sql_query += f" WHERE {self.where_ops.get()}='{self.wcondition.get()}'"
+            
+        if self.order_ops.get() != '*':
+            sql_query += f" ORDER BY {self.order_ops.get()} {self.order_type.get()}"
         
+        #generate GUI
+        root = CTk()
+        self.frame2 = CTkFrame(root)
+        self.frame2.pack()
+        pt = Table(self.frame2, dataframe=db_management.get_table(sql_query))
+        pt.show()
+        root.mainloop()
+    
+    def table_updated(self, *event):
+        if len(self.field_stack) > 0:
+            for field in self.field_stack:
+                field.destroy()
+        self.field_stack.clear()
+        self.field_stack.append(self.update_fields(self, *event))
+        self.where_ops.configure(self.where, values=self.table_fields)
+        self.selected_where.set(self.table_fields[0])
+    
     def update_fields(self, *event) -> CTkOptionMenu:
         df: DataFrame = db_management.get_table(f"SELECT * FROM {self.selected_table.get()}")
         self.table_fields: list[str] = ["*"]
@@ -156,19 +157,13 @@ class GUI:
                 field_ops = self.field_stack.pop()
                 field_ops.destroy()
             self.field_stack[len(self.field_stack) -1].configure(command=self.add_fields)
-
         else:       
             self.field_stack[len(self.field_stack) -1].configure(command=print("value changed"))
             field_ops = CTkOptionMenu(master=self.select, values=self.table_fields, command=self.add_fields)
             field_ops.pack(padx=20, pady=5, side=LEFT)
             self.field_stack.append(field_ops)
-        
-    def temp(self, *event):
-        field_ops = self.field_stack.pop()
-        field_ops.destroy()
 
 
-    
 def main():
     set_appearance_mode("dark")
     set_default_color_theme("dark-blue")
